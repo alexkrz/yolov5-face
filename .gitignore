@@ -1,1 +1,8 @@
 */__pycache__
+
+# IDE
+/.vscode
+
+# weights
+/weights/*
+!/weights/download_weights.sh

@@ -11,12 +11,34 @@ import torch.nn as nn
 sys.path.append('./')  # to run '$ python *.py' files in subdirectories
 logger = logging.getLogger(__name__)
 
-from models.common import Conv, Bottleneck, SPP, DWConv, Focus, BottleneckCSP, C3, ShuffleV2Block, Concat, NMS, autoShape, StemBlock, BlazeBlock, DoubleBlazeBlock
-from models.experimental import MixConv2d, CrossConv
+from models.common import (
+    C3,
+    NMS,
+    SPP,
+    BlazeBlock,
+    Bottleneck,
+    BottleneckCSP,
+    Concat,
+    Conv,
+    DoubleBlazeBlock,
+    DWConv,
+    Focus,
+    ShuffleV2Block,
+    StemBlock,
+    autoShape,
+)
+from models.experimental import CrossConv, MixConv2d
 from utils.autoanchor import check_anchor_order
-from utils.general import make_divisible, check_file, set_logging
-from utils.torch_utils import time_synchronized, fuse_conv_and_bn, model_info, scale_img, initialize_weights, \
-    select_device, copy_attr
+from utils.general import check_file, make_divisible, set_logging
+from utils.torch_utils import (
+    copy_attr,
+    fuse_conv_and_bn,
+    initialize_weights,
+    model_info,
+    scale_img,
+    select_device,
+    time_synchronized,
+)
 
 try:
     import thop  # for FLOPS computation
@@ -123,6 +145,8 @@ class Detect(nn.Module):
         grid = torch.stack((xv, yv), 2).expand((1, self.na, ny, nx, 2)).float()
         anchor_grid = (self.anchors[i].clone() * self.stride[i]).view((1, self.na, 1, 1, 2)).expand((1, self.na, ny, nx, 2)).float()
         return grid, anchor_grid
+    
+    
 class Model(nn.Module):
     def __init__(self, cfg='yolov5s.yaml', ch=3, nc=None):  # model, input channels, number of classes
         super(Model, self).__init__()
@@ -320,8 +344,8 @@ def parse_model(d, ch):  # model_dict, input_channels(3)
     return nn.Sequential(*layers), sorted(save)
 
 
-from thop import profile
-from thop import clever_format
+from thop import clever_format, profile
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--cfg', type=str, default='yolov5s.yaml', help='model.yaml')
