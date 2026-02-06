@@ -55,9 +55,9 @@ def load_torch(args: Config):
 
 def load_onnx(args: Config):
     img = cv2.imread(args.img_fp)
-    model = cv2.dnn.readNetFromONNX(args.onnx_fp)
-
     print("Original image shape:", img.shape)
+
+    model = cv2.dnn.readNetFromONNX(args.onnx_fp)
 
     # Preprocess image for ONNX model
     blob = cv2.dnn.blobFromImage(
