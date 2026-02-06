@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from pathlib import Path
 
 import cv2
@@ -8,15 +9,26 @@ from torchvision import transforms
 from models.yolo import Model
 from utils.general import non_max_suppression_face
 
+script_dir = Path(__file__).parent
 
-def load_torch(img_fp: str, model_fp: str):
+
+@dataclass
+class Config:
+    img_fp = str(script_dir / "data" / "images" / "zidane.jpg")
+    torch_fp = str(script_dir / "weights" / "yolov5n-face.pt")
+    onnx_fp = str(script_dir / "weights" / "yolov5n-face.onnx")
+    iou_thres = 0.45
+    conf_thres = 0.25
+
+
+def load_torch(args: Config):
     model = Model(cfg="models/yolov5n.yaml")
     # state_dict = model.state_dict()
     # print(state_dict.keys())
-    weights = torch.load(model_fp)
+    weights = torch.load(args.torch_fp)
     model.load_state_dict(weights["model"].state_dict())
 
-    img = Image.open(img_fp)
+    img = Image.open(args.img_fp)
     tfms = transforms.Compose([
         transforms.Resize((640, 640)),
         transforms.ToTensor(),
@@ -34,23 +46,21 @@ def load_torch(img_fp: str, model_fp: str):
     # TODO: Export model, output shape should be [batch_size, n_feats, n_preds]
 
     # Apply NMS
-    preds = non_max_suppression_face(preds_raw)
+    preds = non_max_suppression_face(preds_raw, args.conf_thres, args.iou_thres)
     print(preds[0].shape)
 
     # TODO: Implement NMS and coordinate transformation on ONNX model output
+    # NOTE: It looks like Unity prefers to do NMS along the last dimension
 
 
-def load_onnx(img_fp: str, model_fp: str):
-    img = cv2.imread(img_fp)
-    model = cv2.dnn.readNetFromONNX(model_fp)
+def load_onnx(args: Config):
+    img = cv2.imread(args.img_fp)
+    model = cv2.dnn.readNetFromONNX(args.onnx_fp)
 
     print(img.shape)
 
 
 if __name__ == "__main__":
-    script_dir = Path(__file__).parent
-    img_fp = script_dir / "data" / "images" / "zidane.jpg"
-    torch_fp = script_dir / "weights" / "yolov5n-face.pt"
-    onnx_fp = script_dir / "weights" / "yolov5n-face.onnx"
-    # load_torch(str(img_fp), str(torch_fp))
-    load_onnx(str(img_fp), str(onnx_fp))
+    args = Config
+    load_torch(args)
+    # load_onnx(args)
