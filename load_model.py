@@ -2,12 +2,14 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import cv2
+import numpy as np
 import torch
 from PIL import Image
 from torchvision import transforms
 
 from models.yolo import Model
 from utils.general import non_max_suppression_face
+from utils.postprocess import non_max_suppression_onnx
 
 script_dir = Path(__file__).parent
 
@@ -74,6 +76,12 @@ def load_onnx(args: Config):
     model.setInput(blob)
     outputs = model.forward()
     print("ONNX output shape:", outputs.shape)
+    preds_raw = outputs[0]
+
+    # Apply NMS
+    preds = non_max_suppression_onnx(preds_raw, args.conf_thres, args.iou_thres)
+    print(preds.shape)
+    print(preds[0])
 
 
 if __name__ == "__main__":
