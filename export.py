@@ -10,18 +10,18 @@ import time
 
 sys.path.append('./')  # to run '$ python *.py' files in subdirectories
 
+import onnx
 import torch
 import torch.nn as nn
 
 import models
 from models.experimental import attempt_load
 from utils.activations import Hardswish, SiLU
-from utils.general import set_logging, check_img_size
-import onnx
+from utils.general import check_img_size, set_logging
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--weights', type=str, default='./yolov5s.pt', help='weights path')  # from yolov5/models/
+    parser.add_argument('--weights', type=str, default='./weights/yolov5n-face.pt', help='weights path')  # from yolov5/models/
     parser.add_argument('--img_size', nargs='+', type=int, default=[640, 640], help='image size')  # height, width
     parser.add_argument('--batch_size', type=int, default=1, help='batch size')
     parser.add_argument('--dynamic', action='store_true', default=False, help='enable dynamic axis in onnx model')
@@ -94,8 +94,8 @@ if __name__ == '__main__':
 
     # onnx infer
     if opt.onnx_infer:
-        import onnxruntime
         import numpy as np
+        import onnxruntime
         providers =  ['CPUExecutionProvider']
         session = onnxruntime.InferenceSession(f, providers=providers)
         im = img.cpu().numpy().astype(np.float32) # torch to numpy
@@ -113,8 +113,8 @@ if __name__ == '__main__':
     # PB export
     if opt.onnx2pb:
         print('download the newest onnx_tf by https://github.com/onnx/onnx-tensorflow/tree/master/onnx_tf')
-        from onnx_tf.backend import prepare
         import tensorflow as tf
+        from onnx_tf.backend import prepare
 
         outpb = f.replace('.onnx', '.pb')  # filename
         # strict=True maybe leads to KeyError: 'pyfunc_0', check: https://github.com/onnx/onnx-tensorflow/issues/167

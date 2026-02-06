@@ -94,7 +94,9 @@ class Detect(nn.Module):
                 y = torch.cat([box_xy, box_wh, y[:, :, :, :, 4:5], landm1, landm2, landm3, landm4, landm5, y[:, :, :, :, 15:15+self.nc]], -1)
 
                 z.append(y.view(bs, -1, self.no))
-            return torch.cat(z, 1)
+            out = torch.cat(z, 1)  # Concatenate feature maps
+            out = out.permute(0, 2, 1)  # Have number of outputs as second dimension
+            return out
         
         for i in range(self.nl):
             x[i] = self.m[i](x[i])  # conv

@@ -1,5 +1,6 @@
 from pathlib import Path
 
+import cv2
 import torch
 from PIL import Image
 from torchvision import transforms
@@ -8,7 +9,7 @@ from models.yolo import Model
 from utils.general import non_max_suppression_face
 
 
-def main(img_fp: str, model_fp: str):
+def load_torch(img_fp: str, model_fp: str):
     model = Model(cfg="models/yolov5n.yaml")
     # state_dict = model.state_dict()
     # print(state_dict.keys())
@@ -39,8 +40,17 @@ def main(img_fp: str, model_fp: str):
     # TODO: Implement NMS and coordinate transformation on ONNX model output
 
 
+def load_onnx(img_fp: str, model_fp: str):
+    img = cv2.imread(img_fp)
+    model = cv2.dnn.readNetFromONNX(model_fp)
+
+    print(img.shape)
+
+
 if __name__ == "__main__":
     script_dir = Path(__file__).parent
     img_fp = script_dir / "data" / "images" / "zidane.jpg"
-    model_fp = script_dir / "weights" / "yolov5n-face.pt"
-    main(str(img_fp), str(model_fp))
+    torch_fp = script_dir / "weights" / "yolov5n-face.pt"
+    onnx_fp = script_dir / "weights" / "yolov5n-face.onnx"
+    # load_torch(str(img_fp), str(torch_fp))
+    load_onnx(str(img_fp), str(onnx_fp))
