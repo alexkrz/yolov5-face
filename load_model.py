@@ -29,10 +29,11 @@ def load_torch(args: Config):
     model.load_state_dict(weights["model"].state_dict())
 
     img = Image.open(args.img_fp)
-    tfms = transforms.Compose([
-        transforms.Resize((640, 640)),
-        transforms.ToTensor(),
-    ]
+    tfms = transforms.Compose(
+        [
+            transforms.Resize((640, 640)),
+            transforms.ToTensor(),
+        ]
     )
     input: torch.Tensor = tfms(img)
     input = input.unsqueeze(0)  # Add batch dimension
@@ -57,10 +58,25 @@ def load_onnx(args: Config):
     img = cv2.imread(args.img_fp)
     model = cv2.dnn.readNetFromONNX(args.onnx_fp)
 
-    print(img.shape)
+    print("Original image shape:", img.shape)
+
+    # Preprocess image for ONNX model
+    blob = cv2.dnn.blobFromImage(
+        img,
+        1 / 255.0,
+        (640, 640),
+        swapRB=True,
+        crop=False,
+    )
+    print("Blob shape:", blob.shape)
+
+    # Set input and run inference
+    model.setInput(blob)
+    outputs = model.forward()
+    print("ONNX output shape:", outputs.shape)
 
 
 if __name__ == "__main__":
     args = Config
-    load_torch(args)
-    # load_onnx(args)
+    # load_torch(args)
+    load_onnx(args)
