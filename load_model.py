@@ -5,6 +5,7 @@ from PIL import Image
 from torchvision import transforms
 
 from models.yolo import Model
+from utils.general import non_max_suppression_face
 
 
 def main(img_fp: str, model_fp: str):
@@ -24,8 +25,18 @@ def main(img_fp: str, model_fp: str):
     input = input.unsqueeze(0)  # Add batch dimension
     print(input.shape)
 
-    preds = model(input)[0]
-    print(preds.shape)
+    model.eval()
+    outputs = model(input)
+    preds_raw = outputs[0]  # Concatenated tensor
+    print(preds_raw.shape)
+
+    # TODO: Export model, output shape should be [batch_size, n_feats, n_preds]
+
+    # Apply NMS
+    preds = non_max_suppression_face(preds_raw)
+    print(preds[0].shape)
+
+    # TODO: Implement NMS and coordinate transformation on ONNX model output
 
 
 if __name__ == "__main__":
