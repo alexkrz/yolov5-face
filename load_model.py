@@ -9,7 +9,7 @@ from torchvision import transforms
 
 from models.yolo import Model
 from utils.general import non_max_suppression_face
-from utils.postprocess import non_max_suppression_onnx
+from utils.postprocess import draw_bboxes_and_keypoints, non_max_suppression_onnx, rescale_coordinates
 
 script_dir = Path(__file__).parent
 
@@ -46,13 +46,10 @@ def load_torch(args: Config):
     preds_raw = outputs[0]  # Concatenated tensor
     print(preds_raw.shape)
 
-    # TODO: Export model, output shape should be [batch_size, n_feats, n_preds]
-
     # Apply NMS
     preds = non_max_suppression_face(preds_raw, args.conf_thres, args.iou_thres)
     print(preds[0].shape)
 
-    # TODO: Implement NMS and coordinate transformation on ONNX model output
     # NOTE: It looks like Unity prefers to do NMS along the last dimension
 
 
@@ -80,8 +77,16 @@ def load_onnx(args: Config):
 
     # Apply NMS
     preds = non_max_suppression_onnx(preds_raw, args.conf_thres, args.iou_thres)
-    print(preds.shape)
-    print(preds[0])
+    print("Predictions after NMS:", preds.shape)
+
+    # Rescale coordinates
+    preds = rescale_coordinates(preds, img)
+    bboxes = np.array(preds[:, :4], dtype=int)
+    keypoints_all = np.array(preds[:, 5:15], dtype=int)
+    print("Bbox coordinates:", bboxes[0])
+
+    img = draw_bboxes_and_keypoints(img, bboxes, keypoints_all)
+    cv2.imwrite("results/result.jpg", img)
 
 
 if __name__ == "__main__":

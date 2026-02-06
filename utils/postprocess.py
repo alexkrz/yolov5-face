@@ -1,3 +1,6 @@
+from copy import deepcopy
+
+import cv2
 import numpy as np
 
 
@@ -72,3 +75,56 @@ def non_max_suppression_onnx(
         order = order[np.concatenate([[0], np.where(iou <= iou_thresh)[0] + 1])][1:]
 
     return detections[np.array(keep_indices, dtype=int)]
+
+
+def rescale_coordinates(
+    preds: np.ndarray,
+    img: np.ndarray,
+) -> np.ndarray:
+    # Rescale coordinates to original image
+    orig_h, orig_w = img.shape[:2]
+    scale_x = orig_w / 640.0
+    scale_y = orig_h / 640.0
+
+    # Scale bounding boxes (x1, y1, x2, y2)
+    preds[:, 0] *= scale_x  # x1
+    preds[:, 1] *= scale_y  # y1
+    preds[:, 2] *= scale_x  # x2
+    preds[:, 3] *= scale_y  # y2
+
+    # Scale landmarks (5 landmarks with x, y coordinates starting at index 5)
+    for i in range(5):
+        preds[:, 5 + 2 * i] *= scale_x  # landmark x
+        preds[:, 5 + 2 * i + 1] *= scale_y  # landmark y
+
+    return preds
+
+
+def draw_bboxes_and_keypoints(
+    img: np.ndarray,
+    bboxes: np.ndarray,
+    keypoints_all: np.ndarray,
+    point_size: int = 5,
+) -> np.ndarray:
+    img = deepcopy(img)
+    for i in range(len(bboxes)):
+        # bbox is in (x1, y1, x2, y2) format
+        bbox = bboxes[i]
+        x1, y1, x2, y2 = bbox
+        # keypoints is a flat array of 10 values: [x1, y1, x2, y2, x3, y3, x4, y4, x5, y5]
+        keypoints = keypoints_all[i]
+
+        cv2.rectangle(
+            img,
+            (x1, y1),
+            (x2, y2),
+            (0, 255, 0),
+            5,
+        )
+
+        cv2.circle(img, (keypoints[0], keypoints[1]), 2, (0, 0, 255), point_size)
+        cv2.circle(img, (keypoints[2], keypoints[3]), 2, (0, 0, 255), point_size)
+        cv2.circle(img, (keypoints[4], keypoints[5]), 2, (0, 0, 255), point_size)
+        cv2.circle(img, (keypoints[6], keypoints[7]), 2, (0, 0, 255), point_size)
+        cv2.circle(img, (keypoints[8], keypoints[9]), 2, (0, 0, 255), point_size)
+    return img

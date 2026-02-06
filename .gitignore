@@ -3,6 +3,9 @@
 # IDE
 /.vscode
 
-# weights
+# Weights
 /weights/*
 !/weights/download_weights.sh
+
+# Results
+/results/*
